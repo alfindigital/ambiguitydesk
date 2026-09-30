@@ -8,8 +8,15 @@
   const form = $("#searchForm");
   const input = $("#q");
   const resultBox = $("#result");
-  const modeBadge = $("#modeBadge");
   let inflight = null;
+
+  const themeBtn = $("#themeToggle");
+  themeBtn?.addEventListener("click", () => {
+    const toLight = document.documentElement.dataset.theme !== "light";
+    if (toLight) document.documentElement.dataset.theme = "light";
+    else delete document.documentElement.dataset.theme;
+    try { toLight ? localStorage.setItem("ad-theme", "light") : localStorage.removeItem("ad-theme"); } catch {}
+  });
 
   const EXPLORERS = {
     ethereum: "https://etherscan.io/token/",
@@ -142,17 +149,18 @@
     row.append(el("span", "ex-chain", c.platform));
 
     const addr = el("div", "ex-addr");
-    const at = el("span", "addr-text", shortAddr(c.address));
+    const exp = explorerFor(c.platform);
+    let at;
+    if (exp) {
+      at = el("a", "addr-text", shortAddr(c.address));
+      at.href = exp + encodeURIComponent(c.address);
+      at.target = "_blank";
+      at.rel = "noopener noreferrer";
+    } else {
+      at = el("span", "addr-text", shortAddr(c.address));
+    }
     at.title = c.address;
     addr.append(at, copyButton(c.address));
-    const exp = explorerFor(c.platform);
-    if (exp) {
-      const link = el("a", "addr-exp", "explorer");
-      link.href = exp + encodeURIComponent(c.address);
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      addr.append(link);
-    }
     row.append(addr);
 
     const stats = el("div", "ex-stats");
@@ -184,7 +192,8 @@
   function headerRow() {
     const head = el("div", "exhibit-head");
     for (const t of ["#", "candidate", "chain", "address", "liquidity", "traders 24h", "mcap", "24h", "liq×ut24h"]) {
-      head.append(el("span", "", t));
+      const numeric = ["liquidity", "traders 24h", "mcap", "24h"].includes(t);
+      head.append(el("span", numeric ? "num-h" : "", t));
     }
     return head;
   }
@@ -201,10 +210,26 @@
     nameLine.append(document.createTextNode(` · ${pick.candidate.platform}`));
     body.append(nameLine);
     const addrLine = el("div", "pick-addr");
-    addrLine.append(el("span", "", pick.candidate.address));
+    const pexp = explorerFor(pick.candidate.platform);
+    if (pexp) {
+      const link = el("a", "", pick.candidate.address);
+      link.href = pexp + encodeURIComponent(pick.candidate.address);
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      addrLine.append(link);
+    } else addrLine.append(el("span", "", pick.candidate.address));
     body.append(addrLine);
     strip.append(body);
-    strip.append(copyButton(pick.candidate.address));
+    const actions = el("div", "pick-actions");
+    actions.append(copyButton(pick.candidate.address));
+    if (pexp) {
+      const go = el("a", "addr-exp", "explorer ↗");
+      go.href = pexp + encodeURIComponent(pick.candidate.address);
+      go.target = "_blank";
+      go.rel = "noopener noreferrer";
+      actions.append(go);
+    }
+    strip.append(actions);
 
     const reason = el("div", "pick-reason");
     reason.append(el("b", "", "Why: "));
@@ -248,7 +273,14 @@
       const nm = el("span", "family-name");
       nm.append(document.createTextNode(f.name || "?"), el("span", "sym", ` ${f.symbol}`));
       row.append(nm);
-      const addr = el("span", "family-addr", shortAddr(f.address));
+      let addr;
+      const fexp = explorerFor(f.platform);
+      if (fexp) {
+        addr = el("a", "family-addr", shortAddr(f.address));
+        addr.href = fexp + encodeURIComponent(f.address);
+        addr.target = "_blank";
+        addr.rel = "noopener noreferrer";
+      } else addr = el("span", "family-addr", shortAddr(f.address));
       addr.title = f.address;
       row.append(addr);
       row.append(copyButton(f.address));
@@ -261,10 +293,6 @@
 
   function renderResult(r) {
     resultBox.innerHTML = "";
-
-    modeBadge.classList.remove("is-hidden", "live", "replay");
-    modeBadge.classList.add(r.mode === "live" ? "live" : "replay");
-    modeBadge.textContent = r.mode === "live" ? "LIVE" : "REPLAY";
 
     const stats = el("p", "stats-line");
     stats.append(
@@ -338,12 +366,12 @@
     try {
       const res = await fetch(`/api/resolve?q=${encodeURIComponent(query)}`, { signal: ctrl.signal });
       const body = await res.json().catch(() => null);
-      if (res.status === 404) { setState("notfound", body?.query ?? query); modeBadge.classList.add("is-hidden"); return; }
-      if (!res.ok || !body?.ok) { setState("error", body?.error ?? `http ${res.status}`); modeBadge.classList.add("is-hidden"); return; }
-      if (!body.candidates?.length) { setState("notfound", body.query ?? query); modeBadge.classList.add("is-hidden"); return; }
+      if (res.status === 404) { setState("notfound", body?.query ?? query); return; }
+      if (!res.ok || !body?.ok) { setState("error", body?.error ?? `http ${res.status}`); return; }
+      if (!body.candidates?.length) { setState("notfound", body.query ?? query); return; }
       renderResult(body);
     } catch (e) {
-      if (e?.name !== "AbortError") { setState("error", e instanceof Error ? e.message : "network"); modeBadge.classList.add("is-hidden"); }
+      if (e?.name !== "AbortError") setState("error", e instanceof Error ? e.message : "network");
     } finally {
       form.querySelector("button[type=submit]").disabled = false;
     }
