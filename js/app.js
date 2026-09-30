@@ -200,7 +200,7 @@
 
   function renderPick(pick) {
     const strip = el("div", "pick-strip");
-    const stamp = el("div", `pick-stamp${pick.label === "close-call" ? " close" : ""}`, "best-supported candidate");
+    const stamp = el("div", `pick-stamp${pick.label === "close-call" ? " close" : ""}`, pick.label === "close-call" ? "close call" : "best pick");
     strip.append(stamp);
 
     const body = el("div", "pick-body");
@@ -258,7 +258,7 @@
 
   function renderFamily(family, query) {
     const box = el("div", "family-box");
-    const stamp = el("div", "pick-stamp family", "canonical multi-chain asset");
+    const stamp = el("div", "pick-stamp family", "multi-chain asset");
     box.append(stamp);
     const note = el("div", "pick-reason");
     note.append(el("b", "", "Reframed: "));
