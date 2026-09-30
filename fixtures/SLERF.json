@@ -1,0 +1,73 @@
+{
+  "query": "SLERF",
+  "endpoint": "/v1/dex/search",
+  "capturedAt": "2026-09-30T16:32:29.204Z",
+  "httpStatus": 200,
+  "credits": 1,
+  "bodySha256": "66fc5a107fb6b17976d1dbe4e00717691b9d7555e1a382ed0a2e7d7b82ba5900",
+  "body": {
+    "data": {
+      "total": 2,
+      "tks": [
+        {
+          "pltId": 16,
+          "plt": "Solana",
+          "plti": 5426,
+          "n": "SLERF",
+          "s": "SLERF",
+          "addr": "7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7LoiVkM3",
+          "pt": "1710701551000",
+          "w": "https://www.slerf.wtf/raids",
+          "x": "https://twitter.com/Slerfsol",
+          "l": "https://s2.coinmarketcap.com/static/img/coins/64x64/29920.png",
+          "pu": "0.02379708166421955727631246106827179",
+          "pc24h": 0.006,
+          "dec": 9,
+          "tsup": "499985152.306992242",
+          "fpt": "1740784534000",
+          "fpct": "1710744804000",
+          "v24h": 1499.122457747056,
+          "mc": 11898187.500346748,
+          "liq": 20775768.498408034,
+          "ts": "1790774819000",
+          "lf": 1,
+          "cid": 29920,
+          "ut24h": "34",
+          "ecs": 0
+        },
+        {
+          "pltId": 16,
+          "plt": "Solana",
+          "plti": 5426,
+          "n": "SLERF",
+          "s": "SLERF",
+          "addr": "9999FVbjHioTcoJpoBiSjpxHW6xEn3witVuXKqBh2RFQ",
+          "pt": "1753971143000",
+          "w": "https://www.slerf.wtf/",
+          "x": "https://twitter.com/Slerfsol",
+          "l": "https://s2.coinmarketcap.com/static/img/coins/64x64/37758.png",
+          "pu": "0.002243131525839019200000000000000000",
+          "pc24h": 0.0064,
+          "dec": 9,
+          "tsup": "999989595.069738284",
+          "fpt": "1761069600000",
+          "fpct": "1761006483000",
+          "v24h": 3915.620253354204,
+          "mc": 2243108.186211925,
+          "liq": 322793.96766984183,
+          "ts": "1790775123000",
+          "lf": 1,
+          "cid": 37758,
+          "ut24h": "22"
+        }
+      ]
+    },
+    "status": {
+      "timestamp": "2026-09-30T16:32:29.273Z",
+      "error_code": "0",
+      "error_message": "",
+      "elapsed": 179,
+      "credit_count": 1
+    }
+  }
+}

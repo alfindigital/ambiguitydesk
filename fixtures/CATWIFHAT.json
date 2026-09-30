@@ -1,0 +1,21 @@
+{
+  "query": "CATWIFHAT",
+  "endpoint": "/v1/dex/search",
+  "capturedAt": "2026-09-30T16:32:34.883Z",
+  "httpStatus": 200,
+  "credits": 1,
+  "bodySha256": "090fb9a1066d70d5461fb000c0183d9e5032ad01fe3975501d337e3a722f87fa",
+  "body": {
+    "data": {
+      "total": 0,
+      "tks": []
+    },
+    "status": {
+      "timestamp": "2026-09-30T16:32:34.949Z",
+      "error_code": "0",
+      "error_message": "",
+      "elapsed": 196,
+      "credit_count": 1
+    }
+  }
+}

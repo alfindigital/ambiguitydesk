@@ -215,7 +215,7 @@ function buildResult(query, rawRows, meta) {
     query,
     endpoint: "/v1/dex/search",
     ...meta,
-    resolution: family ? "family" : "pick",
+    resolution: rows.length === 0 ? "none" : family ? "family" : "pick",
     family,
     stats: {
       totalRows: rows.length,
