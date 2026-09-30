@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AmbiguityDesk: every token wearing your ticker</title>
+  <meta name="description" content="Type a ticker. See every token and chain that answers to it, then which address is the safest pick. Built on CoinMarketCap DEX data.">
+  <meta name="theme-color" content="#0b0c0a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wordmark">Ambiguity<span>Desk</span></div>
+    <div class="topbar-meta">
+      <span class="paper-tag">evidence desk</span>
+      <span id="modeBadge" class="mode-badge is-hidden" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="search-panel" aria-labelledby="searchLabel">
+      <h1 class="display-1">One ticker.<br><span class="accent-italic">Thirty-two impostors.</span></h1>
+      <p class="lede">Same-name scams live on ticker collision. Type the ticker, get every token wearing it across every chain, and the address most worth trusting.</p>
+
+      <form id="searchForm" class="search-form" role="search">
+        <label id="searchLabel" for="q" class="visually-hidden">Ticker or contract address</label>
+        <input id="q" name="q" type="text" inputmode="text" autocomplete="off" spellcheck="false"
+               placeholder="PEPE, MOODENG, 0x6982…" maxlength="40" autofocus>
+        <button type="submit" class="btn-primary">Resolve</button>
+      </form>
+
+      <div class="try-row" aria-label="Example tickers">
+        <span class="try-label">try:</span>
+        <button class="paper-tag chip" data-q="PEPE">PEPE</button>
+        <button class="paper-tag chip" data-q="MOODENG">MOODENG</button>
+        <button class="paper-tag chip" data-q="WIF">WIF</button>
+        <button class="paper-tag chip" data-q="W">W</button>
+        <button class="paper-tag chip" data-q="BONK">BONK</button>
+        <button class="paper-tag chip" data-q="CAT">CAT</button>
+        <button class="paper-tag chip" data-q="TRUMP">TRUMP</button>
+      </div>
+    </section>
+
+    <section id="result" class="result" aria-live="polite">
+      <div class="idle-state">
+        <p class="idle-line">Every candidate sits at the desk. Numbers decide, not names.</p>
+      </div>
+    </section>
+
+    <noscript>
+      <p class="noscript">AmbiguityDesk needs JavaScript for a single call to <code>/api/resolve</code>. The API itself answers plain JSON.</p>
+    </noscript>
+  </main>
+
+  <footer class="foot">
+    <p>A score is a heuristic, not a pardon. Pool depth and trader counts can be bought. Verify the contract on a chain explorer before money moves.</p>
+    <p class="foot-meta">Data: CoinMarketCap DEX API (<code>/v1/dex/search</code>, 1 call per resolve) · Same evidence discipline as <a href="https://verdex.web.id" rel="noopener">Verdex</a> · Not financial advice.</p>
+  </footer>
+
+  <script src="js/app.js?v=1" defer></script>
+</body>
+</html>

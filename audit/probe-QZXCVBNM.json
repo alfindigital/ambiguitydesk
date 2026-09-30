@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "query": "QZXCVBNM",
+  "endpoint": "/v1/dex/search",
+  "mode": "live",
+  "capturedAt": "2026-09-30T11:17:57.990Z",
+  "credits": 1,
+  "bodySha256": "e4e56e50fdd1bf0af3884acf9a692e446956c9c698db0246de559284f5f73563",
+  "stats": {
+    "totalRows": 0,
+    "exactCount": 0,
+    "relatedCount": 0,
+    "chainCount": 0,
+    "clusterCount": 0
+  },
+  "pick": null,
+  "candidates": []
+}

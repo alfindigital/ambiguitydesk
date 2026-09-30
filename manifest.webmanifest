@@ -1,0 +1,13 @@
+{
+  "name": "AmbiguityDesk",
+  "short_name": "AmbiguityDesk",
+  "description": "Every token wearing a ticker, and which address is the safest pick.",
+  "start_url": "/?from=pwa",
+  "display": "standalone",
+  "background_color": "#0b0c0a",
+  "theme_color": "#0b0c0a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
