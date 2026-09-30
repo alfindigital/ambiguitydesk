@@ -169,7 +169,7 @@ export const AmbiguityDemo: React.FC<{ voDir?: string }> = ({ voDir = "" }) => {
             Ambiguity<span style={{ color: C.accent }}>Desk</span>
           </div>
           <div style={{ fontSize: 34, color: C.dim, marginTop: 28, opacity: fade(frame, 30, 60) }}>
-            "PEPE yang mana yang asli?" — every candidate, one answer.
+            "Which PEPE is the real one?" — every candidate, one answer.
           </div>
         </div>
       </Scene>
