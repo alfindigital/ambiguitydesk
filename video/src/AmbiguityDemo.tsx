@@ -149,7 +149,7 @@ const VO = [
   { file: "vo-s4.mp3", from: 1940 },   // closing
 ];
 
-export const AmbiguityDemo: React.FC = () => {
+export const AmbiguityDemo: React.FC<{ voDir?: string }> = ({ voDir = "" }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -157,7 +157,7 @@ export const AmbiguityDemo: React.FC = () => {
     <AbsoluteFill style={{ background: C.bg, color: C.ink, fontFamily: FONT_DATA }}>
       {VO.map((v) => (
         <Sequence key={v.file} from={v.from}>
-          <Audio src={staticFile(v.file)} />
+          <Audio src={staticFile(voDir ? `${voDir}/${v.file}` : v.file)} />
         </Sequence>
       ))}
       {/* S0 — Title (0–100) */}
