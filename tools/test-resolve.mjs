@@ -101,13 +101,12 @@ console.log("— validation + honest 404 —");
   check("unknown ticker → 404", s3 === 404 && b3.ok === false);
 }
 
-console.log("— address-style query (no symbol match → pool=all) —");
+console.log("— ticker query, no exact symbol → no pick (related stays visible) —");
 {
   const synth = {
     query: "zzsynth", endpoint: "/v1/dex/search", capturedAt: "test",
     body: { data: { tks: [
       { plt: "Ethereum", addr: "0xaaa", n: "Alpha", s: "AAA", liq: 500000, ut24h: "100" },
-      { plt: "PulseChain", addr: "0xaaa", n: "Alpha", s: "AAA", liq: 500000, ut24h: "50" },
       { plt: "Solana", addr: "SoLbbb", n: "Beta", s: "BBB", liq: 9000000, ut24h: "10" },
     ] } },
   };
@@ -116,12 +115,46 @@ console.log("— address-style query (no symbol match → pool=all) —");
   const { status, body } = await call("zzsynth");
   unlinkSync(f);
   check("200", status === 200);
-  check("exactCount 0 → pick still chosen", body.stats.exactCount === 0 && !!body.pick);
+  check("exactCount 0 + ticker query → no pick, resolution none",
+    body.stats.exactCount === 0 && body.pick === null && body.resolution === "none",
+    `pick=${JSON.stringify(body.pick?.candidate)} res=${body.resolution}`);
+  check("related rows still listed", body.candidates.length === 2);
+}
+
+console.log("— address-style query (no symbol match → pool=all) —");
+{
+  const synth = {
+    query: "0x" + "ab".repeat(20), endpoint: "/v1/dex/search", capturedAt: "test",
+    body: { data: { tks: [
+      { plt: "Ethereum", addr: "0xaaa", n: "Alpha", s: "AAA", liq: 500000, ut24h: "100" },
+      { plt: "PulseChain", addr: "0xaaa", n: "Alpha", s: "AAA", liq: 500000, ut24h: "50" },
+      { plt: "Solana", addr: "SoLbbb", n: "Beta", s: "BBB", liq: 9000000, ut24h: "10" },
+    ] } },
+  };
+  const fname = ("0x" + "ab".repeat(20)).toUpperCase() + ".json";
+  const f = path.join(FIXTURES, fname);
+  writeFileSync(f, JSON.stringify(synth));
+  const { status, body } = await call("0x" + "ab".repeat(20));
+  unlinkSync(f);
+  check("200", status === 200);
+  check("address query → pick still chosen from full set", !!body.pick);
   check("pick = highest score row (BBB solana)",
     body.pick?.candidate?.address === "SoLbbb", JSON.stringify(body.pick?.candidate));
   check("same-contract cluster: AAA rows share cluster",
     body.candidates[0].cluster === body.candidates[1].cluster ||
     body.candidates.find(c => c.symbol === "AAA")?.cluster === body.candidates.filter(c => c.symbol === "AAA")[1]?.cluster);
+}
+
+console.log("— bonk (deep-pool origin must NOT be farm-excluded) —");
+{
+  const { status, body } = await call("bonk");
+  check("200", status === 200);
+  check("pick = solana bonk origin (dezx…)",
+    body.pick?.candidate?.platform === "Solana" &&
+    body.pick?.candidate?.address?.startsWith("DezXAZ8z"),
+    JSON.stringify({ plt: body.pick?.candidate?.platform, addr: body.pick?.candidate?.address }));
+  check("solana bonk row carries no farming flag",
+    !body.candidates.find((c) => c.address?.startsWith("DezXAZ8z"))?.flags.includes("possible-farming"));
 }
 
 console.log("— usdt (multi-legit → family mode, NOT a pick) —");

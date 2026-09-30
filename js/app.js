@@ -350,7 +350,9 @@
     } else if (r.pick) resultBox.append(renderPick(r.pick));
     else {
       const box = el("div", "notfound-state");
-      box.append(el("p", "", "No candidate has both liquidity and trader data. No pick is better than a fake pick."));
+      box.append(el("p", "", exact.length
+        ? "No candidate has both liquidity and trader data. No pick is better than a fake pick."
+        : `No exact "${r.query}" deployment in this result set — nearest matches below. No pick is better than a wrong pick.`));
       resultBox.append(box);
     }
 

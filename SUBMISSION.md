@@ -16,13 +16,13 @@ announcement post.
 
 ## Tagline
 
-One ticker, thirty-two impostors. Type the ticker — get every token wearing it
-across every chain, and the contract most worth inspecting.
+One ticker, thirty-two impostors. Type the ticker — get every observed
+candidate wearing it across chains, and the contract most worth inspecting.
 
 ## Submission description (long)
 
 AmbiguityDesk answers the question every DEX user actually asks: "which PEPE /
-TRUMP / WIF is the real one?"
+TRUMP / WIF deployment is the one worth inspecting?"
 
 Same-name scam tokens live on ticker collision. The tool calls
 `GET /v1/dex/search?q=<ticker>`, lays out every deployment wearing that symbol,
@@ -31,18 +31,19 @@ black-box answer.
 
 How it decides, in plain terms:
 
-- **Score = pool liquidity × unique 24h traders**, the two numbers a clone
-  cannot fake cheaply at scale.
+- **Score = pool liquidity × unique 24h traders** — the two numbers a clone
+  is least able to fake cheaply at scale.
 - **Pool age bonus** — the real deployment was almost always born first;
   clones arrive yesterday.
 - **Farming flag** — thousands of "unique traders" inside a dust-sized pool is
   a sybil signature, not organic demand. Flagged candidates are excluded from
-  the pick.
+  the pick — deep pools (≥$1M liq) are exempted so crowded origin tokens are
+  not punished for being popular.
 - **Venue split** — CEX/app listings (e.g. Robinhood rows) are separated from
   on-chain candidates instead of silently outranking them.
 - **Family mode** — USDT and WBTC are legitimately multi-chain. When one
-  canonical CMC ID spans ≥3 well-funded chains, the honest answer is "real on
-  every chain — pick your chain," not a fake single winner.
+  canonical CMC ID spans ≥3 well-funded chains, the honest answer is "live on
+  several chains — pick yours," not a fake single winner.
 
 Every result links out to the chain explorer. The pick is labeled
 **heuristic, not proof** — the tool shows receipts instead of claiming truth.
@@ -64,13 +65,13 @@ replay-based verification and tests (42 passing).
 
 ## X post draft
 
-> Built AmbiguityDesk for #BuildwithCMC — the tool for "which PEPE is the real
-> one?"
+> Built AmbiguityDesk for #BuildwithCMC — for the question "which of these
+> 30 PEPEs do I even look at?"
 >
-> Type a ticker → every deployment wearing it across every chain, and the
-> contract most worth trusting. Liquidity × unique traders, pool age, farming
-> flags, CEX rows separated out. Heuristic, not proof — the evidence stays on
-> the table.
+> Type a ticker → every observed deployment wearing it across chains, and the
+> candidate best supported by the evidence. Liquidity × unique traders, pool
+> age, farming flags, CEX rows separated out. Heuristic, not proof — the
+> evidence stays on the table.
 >
 > ambiguitydesk.pages.dev
 
@@ -78,9 +79,9 @@ replay-based verification and tests (42 passing).
 
 - **S0 (title):** "AmbiguityDesk — which one is the real one?"
 - **S1 (PEPE):** "Type a ticker. Every token wearing it appears across every
-  chain — and the contract most worth trusting is marked."
-- **S2 (WIF/clones):** "Clones can't fake deep liquidity and real traders. The
-  evidence decides — not us."
+  chain — and the contract most worth inspecting is marked."
+- **S2 (WIF/clones):** "Clones struggle to fake deep liquidity and real
+  traders. The evidence decides — not us."
 - **S3 (USDT/family):** "Some tickers are legitimately multi-chain. USDT is
   real on twenty-six of them — pick your chain."
 - **S4 (close):** "Free, open-source, deterministic. Built on the CoinMarketCap

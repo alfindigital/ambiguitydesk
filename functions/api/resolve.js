@@ -10,13 +10,16 @@
 // sanity flag, never a sort key (it is trivially inflatable via supply).
 
 const CMC_BASE = "https://pro-api.coinmarketcap.com";
-const QUERY_RE = /^[A-Za-z0-9$.:_-]{1,32}$/;
+const QUERY_RE = /^[A-Za-z0-9$.:_-]{1,44}$/;
+const EVM_ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
+const BASE58_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const MCAP_LIQ_FLAG_RATIO = 1000;   // mc/liq beyond this = absurd, flag it
 const THIN_POOL_USD = 10_000;       // below this the pool is a puddle
 const CLOSE_CALL_MARGIN = 3;        // pick vs runner-up score ratio
 const FAMILY_MIN_CHAINS = 3;        // same canonical cid on this many chains…
 const FAMILY_LIQ_USD = 100_000;     // …each holding a pool this deep → multi-legit asset
 const FARMING_TRADERS_PER_100K = 40;// ut24h per $100k liq above this = farmed-looking
+const FARMING_EXCLUDE_MAX_LIQ = 1_000_000; // farming = crowds on a puddle; a deep pool is evidence, not a farm
 const YOUNG_POOL_DAYS = 30;         // pools younger than this get the young-pool flag
 const YOUNG_PENALTY = 0.5;          // effective-score multiplier for very young pools
 
@@ -43,10 +46,13 @@ const num = (v) => {
 // (any 0x40hex substring), else the address with chain prefixes and
 // bridge-account suffixes stripped; non-EVM chains keep native form.
 function clusterKey(address) {
-  const a = String(address ?? "").trim().toLowerCase();
-  const evm = a.match(/0x[a-f0-9]{40}/);
-  if (evm) return evm[0];
-  const m = a.match(/^(?:eth|evm|bsc|bnb|arb|base|poly|polygon|op|avax)-(.+?)(?:\.[a-z0-9_.-]+)?$/);
+  const a = String(address ?? "").trim();
+  // Bridge refs like "eth-0x6982….omft.near" embed their origin address —
+  // cluster on the embedded 0x. Non-EVM addresses keep native casing
+  // (Solana base58 is case-sensitive: AbCd and abcd are different mints).
+  const evm = a.match(/0x[0-9a-fA-F]{40}/);
+  if (evm) return evm[0].toLowerCase();
+  const m = a.match(/^(?:eth|evm|bsc|bnb|arb|base|poly|polygon|op|avax)-(.+?)(?:\.[a-z0-9_.-]+)?$/i);
   return m ? m[1] : a;
 }
 
@@ -87,6 +93,7 @@ function flagsOf(c, nowMs) {
   // PI probe: clone had 8,255 traders on $83.7K liq (~9,860 per $100k);
   // real PEPE is ~1.6 per $100k.
   if (c.liqUsd !== null && c.liqUsd > 0 && c.uniqueTraders24h !== null
+      && c.liqUsd < FARMING_EXCLUDE_MAX_LIQ
       && c.uniqueTraders24h / (c.liqUsd / 1e5) > FARMING_TRADERS_PER_100K) flags.push("possible-farming");
   // Age relative to capture time so replay stays deterministic forever.
   if (c.firstPoolMs !== null && nowMs !== null
@@ -154,7 +161,7 @@ function buildResult(query, rawRows, meta) {
   // the real one" is then the wrong question — render best-per-chain instead.
   const cidGroups = new Map();
   for (const c of exact) {
-    if (c.cmcId === null || c.venue !== "dex") continue;
+    if (c.cmcId === null || c.cmcId <= 0 || c.venue !== "dex") continue;
     const g = cidGroups.get(c.cmcId) ?? [];
     g.push(c);
     cidGroups.set(c.cmcId, g);
@@ -172,11 +179,14 @@ function buildResult(query, rawRows, meta) {
     break;
   }
 
-  // Pick = best-scoring cluster. Pool is the exact bucket; for address queries
-  // nothing symbol-matches, so the whole result set is the pool instead.
+  // Pick = best-scoring cluster. Pool is the exact bucket; only ADDRESS
+  // queries fall back to the whole result set (nothing symbol-matches there).
+  // A ticker query with zero exact matches must NOT crown a different symbol —
+  // "PEPE2.0" is not an answer to "PEPE".
+  const isAddressQuery = EVM_ADDR_RE.test(query) || BASE58_ADDR_RE.test(query);
+  const pickBase = exact.length ? exact : isAddressQuery ? rows : [];
   // Farmed candidates are fake evidence — excluded from pick eligibility,
   // unless every candidate is flagged (then the pick itself carries the flag).
-  const pickBase = exact.length ? exact : rows;
   const pickDex = pickBase.filter((c) => c.venue === "dex");
   const unFarmed = pickDex.filter((c) => !c.flags.includes("possible-farming"));
   const pickPool = unFarmed.length ? unFarmed : pickDex;
@@ -215,7 +225,7 @@ function buildResult(query, rawRows, meta) {
     query,
     endpoint: "/v1/dex/search",
     ...meta,
-    resolution: rows.length === 0 ? "none" : family ? "family" : "pick",
+    resolution: rows.length === 0 || (!family && !pick) ? "none" : family ? "family" : "pick",
     family,
     stats: {
       totalRows: rows.length,
