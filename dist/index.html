@@ -20,8 +20,13 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="wordmark" href="/" aria-label="AmbiguityDesk home">AMBIGUITY<span>DESK</span></a>
+    <a class="wordmark" href="/" aria-label="AmbiguityDesk home"><span class="brand-dot" aria-hidden="true"></span>Ambiguity<span class="wm-accent">Desk</span></a>
     <div class="topbar-actions">
+      <button id="howBtn" type="button" class="icon-btn" aria-label="How it works" title="How it works">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" width="16" height="16">
+          <path d="M8 .8a5.2 5.2 0 0 0-5.2 5.2h1.9a3.3 3.3 0 1 1 5.1 2.8c-1.2.8-1.8 1.5-1.8 3v.4H9.8v-.4c0-.9.5-1.5 1.5-2.2A5.2 5.2 0 0 0 8 .8ZM7.9 13.4a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z"/>
+        </svg>
+      </button>
       <a href="https://github.com/alfindigital/ambiguitydesk" target="_blank" rel="noopener noreferrer"
          class="icon-btn" aria-label="Source on GitHub" title="Source on GitHub">
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" width="15" height="15">
@@ -42,7 +47,7 @@
   <main>
     <section class="hero" aria-labelledby="searchLabel">
       <h1 class="display-1">Which one is the <em>real</em> one?</h1>
-      <p class="lede">One ticker, dozens of copies. Every token answering to it, across every chain — and the address the evidence backs.</p>
+      <p class="lede">Every token wearing your ticker, on every chain — ranked by liquidity and trader evidence.</p>
 
       <form id="searchForm" class="search-form" role="search">
         <label id="searchLabel" for="q" class="visually-hidden">Ticker or contract address</label>
@@ -69,13 +74,29 @@
   </main>
 
   <footer class="foot">
-    <p class="foot-note">Heuristic, not proof. Liquidity and trader counts can be bought — verify the contract on the explorer before money moves.</p>
-    <p class="foot-meta">
-      Data <a href="https://coinmarketcap.com/api/" rel="noopener">CoinMarketCap DEX API</a> ·
-      <a href="https://github.com/alfindigital/ambiguitydesk" rel="noopener">Source</a> ·
-      Not financial advice
-    </p>
+    <span class="foot-note">Heuristic, not proof — verify on the explorer.</span>
+    <span class="foot-meta">
+      <a href="https://coinmarketcap.com/api/" rel="noopener">CMC DEX API</a> ·
+      <a href="https://github.com/alfindigital/ambiguitydesk" rel="noopener">GitHub</a> ·
+      not financial advice
+    </span>
   </footer>
+
+  <div id="howModal" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="howTitle">
+      <div class="modal-head">
+        <h2 id="howTitle">How it works</h2>
+        <button id="howClose" type="button" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <ol class="how-list">
+        <li><b>One call.</b> Your ticker hits CoinMarketCap <code>/v1/dex/search</code> — 1 credit per resolve.</li>
+        <li><b>Every candidate.</b> All tokens answering to it across all chains, clustered by contract.</li>
+        <li><b>Evidence rank.</b> Liquidity × unique traders 24h, plus pool-age and farming-anomaly checks.</li>
+        <li><b>Honest answer.</b> A best pick, a close call, a multi-chain family — or nothing.</li>
+      </ol>
+      <div id="receiptSlot" class="receipt-slot"></div>
+    </div>
+  </div>
 
   <script src="js/app.js?v=3" defer></script>
 </body>

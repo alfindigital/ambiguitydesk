@@ -82,7 +82,7 @@
       resultBox.innerHTML = "";
       const box = el("div", "error-state");
       box.append(el("p", "", `Resolution failed: ${payload}`));
-      box.append(el("p", "state-note", "Nothing was invented in the meantime. Fix the query or retry."));
+      box.append(el("p", "state-note", "Fix the query or retry."));
       resultBox.append(box);
       return;
     }
@@ -90,23 +90,29 @@
       resultBox.innerHTML = "";
       const box = el("div", "notfound-state");
       box.append(el("p", "", `No token answers to "${payload}".`));
-      box.append(el("p", "state-note", "Live search returned zero rows, or this query is outside the committed replay fixtures."));
+      box.append(el("p", "state-note", "Zero rows from DEX search, or outside the replay fixtures."));
       resultBox.append(box);
       return;
     }
   }
 
+  const COPY_SVG = `<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5.2" y="5.2" width="8" height="8" rx="1.5"/><path d="M10.8 5.2V3.7a1.5 1.5 0 0 0-1.5-1.5H3.7a1.5 1.5 0 0 0-1.5 1.5v5.6a1.5 1.5 0 0 0 1.5 1.5h1.5"/></svg>`;
+  const CHECK_SVG = `<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>`;
+
   function copyButton(address) {
-    const btn = el("button", "addr-copy", "copy");
+    const btn = el("button", "addr-copy");
     btn.type = "button";
+    btn.title = "Copy address";
+    btn.setAttribute("aria-label", "Copy address");
+    btn.innerHTML = COPY_SVG;
     btn.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(address);
-        btn.textContent = "copied";
+        btn.innerHTML = CHECK_SVG;
         btn.classList.add("done");
-        setTimeout(() => { btn.textContent = "copy"; btn.classList.remove("done"); }, 1400);
+        setTimeout(() => { btn.innerHTML = COPY_SVG; btn.classList.remove("done"); }, 1400);
       } catch {
-        btn.textContent = "select + ctrl-c";
+        btn.title = "Select + Ctrl-C";
       }
     });
     return btn;
@@ -234,26 +240,45 @@
     const reason = el("div", "pick-reason");
     reason.append(el("b", "", "Why: "));
     reason.append(document.createTextNode(pick.reason));
-    reason.append(el("div", "pick-caveat", "Scored on observed liquidity x unique traders. A bought pool and farmed wallets can fake both. Read the table before trusting the stamp."));
+    reason.append(el("div", "pick-caveat", "Heuristic pick — depth and trader counts can be bought. Verify on the explorer."));
     strip.append(reason);
     return strip;
   }
 
-  function renderReceipts(r) {
-    const box = el("div", "receipts");
-    const items = [
-      ["source", `${r.endpoint}?q=${r.query}`],
+  function receiptRows(r) {
+    return [
+      ["endpoint", `${r.endpoint}?q=${r.query}`],
       ["captured", r.capturedAt ?? "unknown"],
       ["sha256", r.bodySha256 ? `${r.bodySha256.slice(0, 16)}…` : "unknown"],
       ["credits", r.credits ?? "unknown"],
       ["mode", r.mode],
     ];
-    for (const [k, v] of items) {
+  }
+
+  function renderAudit(r) {
+    const det = el("details", "audit");
+    const sum = el("summary", "", `audit · ${r.mode} · ${r.credits ?? "?"} credit`);
+    det.append(sum);
+    const body = el("div", "audit-body");
+    for (const [k, v] of receiptRows(r)) {
       const s = el("span", "");
       s.append(el("b", "", `${k}: `), document.createTextNode(String(v)));
-      box.append(s);
+      body.append(s);
     }
-    return box;
+    det.append(body);
+    return det;
+  }
+
+  function fillReceiptSlot(r) {
+    const slot = $("#receiptSlot");
+    if (!slot) return;
+    slot.innerHTML = "";
+    slot.append(el("b", "", "last resolve — "));
+    for (const [k, v] of receiptRows(r)) {
+      const row = el("div", "r-row");
+      row.append(el("b", "", `${k}:`), document.createTextNode(` ${v}`));
+      slot.append(row);
+    }
   }
 
   function renderFamily(family, query) {
@@ -263,9 +288,8 @@
     const note = el("div", "pick-reason");
     note.append(el("b", "", "Reframed: "));
     note.append(document.createTextNode(
-      `"${query}" is one asset deployed on many chains — there is no single "real" one. ` +
-      `Same canonical listing (shared CMC id) holds deep pools on ${family.length} chains. ` +
-      `Pick the chain you're actually trading on:`));
+      `"${query}" is one asset on many chains — no single "real" one. ` +
+      `Pick the chain you're trading on:`));
     box.append(note);
     for (const f of family) {
       const row = el("div", "family-row");
@@ -310,6 +334,8 @@
     if (r.stats.elsewhereCount) {
       stats.append(document.createTextNode(" · "), document.createTextNode(`${r.stats.elsewhereCount} off-chain venue listings`));
     }
+    stats.append(renderAudit(r));
+    fillReceiptSlot(r);
     resultBox.append(stats);
 
     const exact = r.candidates.filter((c) => c.bucket === "exact");
@@ -335,7 +361,7 @@
 
     if (related.length) {
       const det = el("details", "related");
-      const sum = el("summary", "", `Also matched: ${related.length} tokens with ${r.query} inside the name or symbol (not exact-symbol collisions)`);
+      const sum = el("summary", "", `Also matched: ${related.length} name/symbol partials`);
       det.append(sum, headerRow());
       related.forEach((c, i) => det.append(candidateRow(c, exact.length + i, maxScore, clusterSizes)));
       resultBox.append(det);
@@ -343,13 +369,12 @@
 
     if (elsewhere.length) {
       const det = el("details", "related");
-      const sum = el("summary", "", `Listed elsewhere: ${elsewhere.length} off-chain venue rows (not DEX pools — excluded from the pick)`);
+      const sum = el("summary", "", `Listed elsewhere: ${elsewhere.length} off-chain venue rows — excluded`);
       det.append(sum, headerRow());
       elsewhere.forEach((c, i) => det.append(candidateRow(c, exact.length + related.length + i, maxScore, clusterSizes)));
       resultBox.append(det);
     }
 
-    resultBox.append(renderReceipts(r));
   }
 
   async function resolve(q) {
@@ -376,6 +401,12 @@
       form.querySelector("button[type=submit]").disabled = false;
     }
   }
+
+  const modal = $("#howModal");
+  $("#howBtn")?.addEventListener("click", () => { modal.hidden = false; });
+  $("#howClose")?.addEventListener("click", () => { modal.hidden = true; });
+  modal?.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && modal && !modal.hidden) modal.hidden = true; });
 
   form.addEventListener("submit", (e) => { e.preventDefault(); resolve(input.value); });
   document.querySelectorAll(".chip").forEach((chip) =>
