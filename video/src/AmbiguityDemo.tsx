@@ -140,13 +140,14 @@ const QueryBar: React.FC<{ q: string; frame: number; delay: number }> = ({ q, fr
   );
 };
 
-// VO timing (30fps): one line per scene, edge-tts en-US-GuyNeural
+// VO timing (30fps): one line per scene, generated per voice set.
+// Fast cut: 1600f ≈ 53s. Each track lands fully INSIDE its scene — no bleed.
 const VO = [
-  { file: "vo-s0.mp3", from: 14 },     // title
-  { file: "vo-s1.mp3", from: 118 },    // PEPE collision
-  { file: "vo-s2.mp3", from: 820 },    // WIF $-trap
-  { file: "vo-s3.mp3", from: 1425 },   // USDT family
-  { file: "vo-s4.mp3", from: 1940 },   // closing
+  { file: "vo-s0.mp3", from: 2 },      // title (scene 0–90)
+  { file: "vo-s1.mp3", from: 105 },    // PEPE collision (90–580)
+  { file: "vo-s2.mp3", from: 595 },    // WIF $-trap (580–960)
+  { file: "vo-s3.mp3", from: 975 },    // USDT family (960–1290)
+  { file: "vo-s4.mp3", from: 1310 },   // closing (1290–1600)
 ];
 
 export const AmbiguityDemo: React.FC<{ voDir?: string }> = ({ voDir = "" }) => {
@@ -160,24 +161,24 @@ export const AmbiguityDemo: React.FC<{ voDir?: string }> = ({ voDir = "" }) => {
           <Audio src={staticFile(voDir ? `${voDir}/${v.file}` : v.file)} />
         </Sequence>
       ))}
-      {/* S0 — Title (0–100) */}
-      <Scene from={0} to={100}>
+      {/* S0 — Title (0–90) */}
+      <Scene from={0} to={90}>
         <div style={{ marginTop: 160 }}>
           <Tag text="evidence desk · coinmarketcap dex api" />
           <div style={{ fontFamily: FONT_DISP, fontSize: 118, fontWeight: 700, marginTop: 36, lineHeight: 1.05 }}>
             Ambiguity<span style={{ color: C.accent }}>Desk</span>
           </div>
-          <div style={{ fontSize: 34, color: C.dim, marginTop: 28, opacity: fade(frame, 40, 70) }}>
+          <div style={{ fontSize: 34, color: C.dim, marginTop: 28, opacity: fade(frame, 30, 60) }}>
             "PEPE yang mana yang asli?" — every candidate, one answer.
           </div>
         </div>
       </Scene>
 
-      {/* S1 — PEPE collision (100–800) */}
-      <Scene from={100} to={800}>
+      {/* S1 — PEPE collision (90–580) */}
+      <Scene from={90} to={580}>
         <Tag text="case 01 — ticker collision" />
-        <QueryBar q="pepe" frame={frame} delay={130} />
-        <div style={{ fontSize: 22, color: C.faint, marginBottom: 10, opacity: fade(frame, 200, 230) }}>
+        <QueryBar q="pepe" frame={frame} delay={110} />
+        <div style={{ fontSize: 22, color: C.faint, marginBottom: 10, opacity: fade(frame, 180, 210) }}>
           50 candidates · 32 exact-symbol matches · 11 chains — in ONE CMC call
         </div>
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflow: "hidden" }}>
@@ -188,23 +189,23 @@ export const AmbiguityDemo: React.FC<{ voDir?: string }> = ({ voDir = "" }) => {
             { num: "EX-04", name: "PePe", sym: "PEPE", chain: "TRON", liq: "$191K", tr: "98" },
             { num: "EX-05", name: "Pepe", sym: "PEPE", chain: "Arbitrum", liq: "$86K", tr: "31", flag: "mcap inflated" },
           ] as Row[]).map((r, i) => (
-            <ExRow key={r.num} r={r} i={i} frame={frame} fps={fps} base={230} />
+            <ExRow key={r.num} r={r} i={i} frame={frame} fps={fps} base={220} />
           ))}
         </div>
         <div style={{ marginTop: 40, display: "flex", alignItems: "center", gap: 32 }}>
-          <Stamp text="best pick" frame={frame} fps={fps} delay={500} />
-          <div style={{ fontSize: 26, color: C.dim, opacity: fade(frame, 560, 600) }}>
+          <Stamp text="best pick" frame={frame} fps={fps} delay={430} />
+          <div style={{ fontSize: 26, color: C.dim, opacity: fade(frame, 470, 510) }}>
             Ethereum PEPE · <span style={{ color: C.accent }}>21.5×</span> the runner-up · heuristic, not proof
           </div>
         </div>
       </Scene>
 
-      {/* S2 — WIF $-trap (800–1400) */}
-      <Scene from={800} to={1400}>
+      {/* S2 — WIF $-trap (580–960) */}
+      <Scene from={580} to={960}>
         <Tag text="case 02 — the $-prefix trap" />
-        <QueryBar q="wif" frame={frame} delay={830} />
+        <QueryBar q="wif" frame={frame} delay={600} />
         <div style={{ display: "flex", gap: 60, marginTop: 10 }}>
-          <div style={{ flex: 1, opacity: fade(frame, 900, 950) }}>
+          <div style={{ flex: 1, opacity: fade(frame, 655, 695) }}>
             <div style={{ fontSize: 20, letterSpacing: 3, color: C.danger, marginBottom: 14 }}>NAIVE MATCH ✗</div>
             <div style={{ border: `1px solid ${C.danger}`, borderRadius: 10, padding: 24, fontSize: 24 }}>
               <div style={{ fontWeight: 700 }}>lizardwifsunglasses <span style={{ color: C.faint }}>WIF</span></div>
@@ -212,7 +213,7 @@ export const AmbiguityDemo: React.FC<{ voDir?: string }> = ({ voDir = "" }) => {
               <div style={{ color: C.danger, marginTop: 12, fontSize: 20, textDecoration: "line-through" }}>wrong pick</div>
             </div>
           </div>
-          <div style={{ flex: 1, opacity: fade(frame, 1050, 1100) }}>
+          <div style={{ flex: 1, opacity: fade(frame, 755, 805) }}>
             <div style={{ fontSize: 20, letterSpacing: 3, color: C.accent, marginBottom: 14 }}>AMBIGUITYDESK ✓</div>
             <div style={{ border: `1px solid ${C.accent}`, borderRadius: 10, padding: 24, fontSize: 24 }}>
               <div style={{ fontWeight: 700 }}>dogwifhat <span style={{ color: C.accent }}>$WIF</span></div>
@@ -221,17 +222,17 @@ export const AmbiguityDemo: React.FC<{ voDir?: string }> = ({ voDir = "" }) => {
             </div>
           </div>
         </div>
-        <div style={{ fontSize: 24, color: C.dim, marginTop: 40, opacity: fade(frame, 1200, 1250) }}>
+        <div style={{ fontSize: 24, color: C.dim, marginTop: 40, opacity: fade(frame, 850, 890) }}>
           The real dogwifhat is listed as <b style={{ color: C.paper }}>$WIF</b>. Match it or crown a clone.
         </div>
       </Scene>
 
-      {/* S3 — USDT family (1400–1900) */}
-      <Scene from={1400} to={1900}>
+      {/* S3 — USDT family (960–1290) */}
+      <Scene from={960} to={1290}>
         <Tag text="case 03 — when the question is wrong" />
-        <QueryBar q="usdt" frame={frame} delay={1430} />
-        <div style={{ opacity: fade(frame, 1520, 1560) }}>
-          <Stamp text="multi-chain asset" frame={frame} fps={fps} delay={1520} />
+        <QueryBar q="usdt" frame={frame} delay={980} />
+        <div style={{ opacity: fade(frame, 1050, 1080) }}>
+          <Stamp text="multi-chain asset" frame={frame} fps={fps} delay={1055} />
           <div style={{ fontSize: 24, color: C.dim, margin: "26px 0" }}>
             One canonical listing · deep pools on 26 chains. There is no single "real" USDT — pick your chain.
           </div>
@@ -242,22 +243,22 @@ export const AmbiguityDemo: React.FC<{ voDir?: string }> = ({ voDir = "" }) => {
               { num: "—", name: "Tether USD", sym: "USDT", chain: "Tron", liq: "$29.4M", tr: "—" },
               { num: "—", name: "Tether USD", sym: "USDT", chain: "Polygon", liq: "$18.1M", tr: "—" },
             ] as Row[]).map((r, i) => (
-              <ExRow key={r.chain} r={r} i={i} frame={frame} fps={fps} base={1600} />
+              <ExRow key={r.chain} r={r} i={i} frame={frame} fps={fps} base={1130} />
             ))}
           </div>
         </div>
       </Scene>
 
-      {/* S4 — closing (1900–2400) */}
-      <Scene from={1900} to={2400}>
+      {/* S4 — closing (1290–1600) */}
+      <Scene from={1290} to={1600}>
         <div style={{ marginTop: 120, textAlign: "center", width: "100%" }}>
-          <div style={{ fontFamily: FONT_DISP, fontSize: 96, fontWeight: 700, opacity: fade(frame, 1940, 1980) }}>
+          <div style={{ fontFamily: FONT_DISP, fontSize: 96, fontWeight: 700, opacity: fade(frame, 1315, 1350) }}>
             evidence, <span style={{ color: C.accent }}>not guesses.</span>
           </div>
-          <div style={{ fontSize: 30, color: C.dim, marginTop: 40, opacity: fade(frame, 2030, 2070) }}>
+          <div style={{ fontSize: 30, color: C.dim, marginTop: 40, opacity: fade(frame, 1395, 1435) }}>
             ambiguitydesk.pages.dev · deterministic · replay-verified · no AI deciding for you
           </div>
-          <div style={{ marginTop: 60, opacity: fade(frame, 2120, 2180) }}>
+          <div style={{ marginTop: 60, opacity: fade(frame, 1480, 1520) }}>
             <Tag text="#buildwithcmc" />
           </div>
         </div>

@@ -6,7 +6,7 @@ export const AmbiguityRoot: React.FC = () => (
   <Composition
     id="AmbiguityDemo"
     component={AmbiguityDemo}
-    durationInFrames={2400}
+    durationInFrames={1600}
     fps={30}
     width={1920}
     height={1080}
