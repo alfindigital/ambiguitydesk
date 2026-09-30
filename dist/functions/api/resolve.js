@@ -23,11 +23,35 @@ const FARMING_EXCLUDE_MAX_LIQ = 1_000_000; // farming = crowds on a puddle; a de
 const YOUNG_POOL_DAYS = 30;         // pools younger than this get the young-pool flag
 const YOUNG_PENALTY = 0.5;          // effective-score multiplier for very young pools
 
-// /v1/dex/search mixes real on-chain pools with off-chain app/CEX venues.
-// Trader counts across venue types are not comparable, so app venues are
-// split into their own bucket and can never win a pick.
-const APP_VENUE_RE = /robinhood|coinbase|binance|kraken|bybit|bitget|kucoin|upbit|crypto\.com|revolut|etoro|paypal|venmo|cash\s*app|okx\b|mexc|gate\.io|bitstamp|bitfinex|gemini|htx|bithumb|bitflyer|lbank|bingx|bitmart|phemex|poloniex|bitvavo|wazirx|zebpay|coinDCX|indodax/i;
-const classifyVenue = (plt) => (APP_VENUE_RE.test(String(plt ?? "")) ? "appvenue" : "dex");
+// Venue classification is a typed registry, not brand guessing. Known chain
+// names → dex; known app/CEX venue names → appvenue (never pick-eligible);
+// anything else → "unmapped" (kept, pick-eligible, but visibly flagged).
+const APP_VENUE_NAMES = new Set([
+  "robinhood", "coinbase", "binance", "kraken", "bybit", "bitget", "kucoin",
+  "upbit", "crypto.com", "revolut", "etoro", "paypal", "venmo", "cash app",
+  "okx", "mexc", "gate.io", "bitstamp", "bitfinex", "gemini", "htx",
+  "bithumb", "bitflyer", "lbank", "bingx", "bitmart", "phemex", "poloniex",
+  "bitvavo", "wazirx", "zebpay", "coindcx", "indodax",
+]);
+const KNOWN_CHAINS = new Set([
+  "ethereum", "solana", "bsc", "bnb chain", "base", "arbitrum", "polygon",
+  "avalanche", "avax", "optimism", "pulsechain", "unichain", "cronos",
+  "fantom", "sui", "ton", "tron", "near", "aptos", "cardano", "hyperliquid",
+  "linea", "mantle", "blast", "scroll", "zksync", "stellar", "algorand",
+  "osmosis", "bitcoin", "xrpl", "sei", "injective", "celo", "moonbeam",
+  "moonriver", "aurora", "gnosis", "kava", "harmony", "eos", "waves",
+  "tezos", "flow", "hedera", "kaspa", "stacks", "manta", "mode", "zora",
+  "taiko", "sonic", "berachain", "abstract", "world chain", "soneium",
+  "core", "bob", "merlin chain", "polynomial", "polygon zkevm", "era",
+]);
+const APP_VENUE_RE = /robinhood|coinbase|binance|kraken|bybit|bitget|kucoin|upbit|crypto\.com|revolut|etoro|paypal|venmo|cash\s*app|okx\b|mexc|gate\.io|bitstamp|bitfinex|gemini|htx|bithumb|bitflyer|lbank|bingx|bitmart|phemex|poloniex|bitvavo|wazirx|zebpay|coindcx|indodax/i;
+const classifyVenue = (plt) => {
+  const p = String(plt ?? "").trim().toLowerCase();
+  if (!p || p === "unknown") return "unmapped";
+  if (KNOWN_CHAINS.has(p)) return "dex";
+  if (APP_VENUE_NAMES.has(p) || APP_VENUE_RE.test(p)) return "appvenue";
+  return "unmapped";
+};
 
 const json = (data, status = 200, extra = {}) =>
   new Response(JSON.stringify(data, null, 2), {
@@ -99,6 +123,7 @@ function flagsOf(c, nowMs) {
   if (c.firstPoolMs !== null && nowMs !== null
       && nowMs - c.firstPoolMs < YOUNG_POOL_DAYS * 86400e3) flags.push("young-pool");
   if (c.venue === "appvenue") flags.push("offchain-venue");
+  if (c.venue === "unmapped") flags.push("venue-unmapped");
   return [...new Set(flags)];
 }
 
@@ -118,8 +143,8 @@ function buildResult(query, rawRows, meta) {
   // Exact-symbol match tolerates the $ prefix convention (dogwifhat is
   // literally "$WIF" in CMC data — a bare "wif" query must still hit it).
   const symNorm = (s) => s.toLowerCase().replace(/^\$/, "");
-  const exact = rows.filter((c) => symNorm(c.symbol) === q && c.venue === "dex");
-  const related = rows.filter((c) => symNorm(c.symbol) !== q && c.venue === "dex");
+  const exact = rows.filter((c) => symNorm(c.symbol) === q && c.venue !== "appvenue");
+  const related = rows.filter((c) => symNorm(c.symbol) !== q && c.venue !== "appvenue");
   const elsewhere = rows.filter((c) => c.venue === "appvenue");
 
   // Cluster same-contract rows across ALL candidates (bridged deployments,
@@ -161,7 +186,7 @@ function buildResult(query, rawRows, meta) {
   // the real one" is then the wrong question — render best-per-chain instead.
   const cidGroups = new Map();
   for (const c of exact) {
-    if (c.cmcId === null || c.cmcId <= 0 || c.venue !== "dex") continue;
+    if (c.cmcId === null || c.cmcId <= 0 || c.venue === "appvenue") continue;
     const g = cidGroups.get(c.cmcId) ?? [];
     g.push(c);
     cidGroups.set(c.cmcId, g);
@@ -185,12 +210,11 @@ function buildResult(query, rawRows, meta) {
   // "PEPE2.0" is not an answer to "PEPE".
   const isAddressQuery = EVM_ADDR_RE.test(query) || BASE58_ADDR_RE.test(query);
   const pickBase = exact.length ? exact : isAddressQuery ? rows : [];
-  // Farmed candidates are fake evidence — excluded from pick eligibility,
-  // unless every candidate is flagged (then the pick itself carries the flag).
-  const pickDex = pickBase.filter((c) => c.venue === "dex");
-  const unFarmed = pickDex.filter((c) => !c.flags.includes("possible-farming"));
-  const pickPool = unFarmed.length ? unFarmed : pickDex;
-  const pickAllFarmed = unFarmed.length === 0;
+  // Farmed candidates are fake evidence — excluded from pick eligibility.
+  // If every candidate is flagged there is NO honest pick: the desk abstains
+  // instead of crowning a suspect.
+  const pickDex = pickBase.filter((c) => c.venue !== "appvenue");
+  const pickPool = pickDex.filter((c) => !c.flags.includes("possible-farming"));
   let pick = null;
   const eligibleClusters = [...clusterOf.values()]
     .map((cl) => {
@@ -207,25 +231,32 @@ function buildResult(query, rawRows, meta) {
     const marginX = runnerUp ? top.score / runnerUp.score : null;
     const label = runnerUp === null ? "only-candidate" : marginX >= CLOSE_CALL_MARGIN ? "clear-lead" : "close-call";
     const clusterNote = top.cluster.addresses.size > 1
-      ? ` Same contract also listed on ${top.cluster.platforms.slice(1).join(", ")}.`
-      : "";
-    const farmNote = pickAllFarmed
-      ? " Every pickable candidate shows a farming signature — treat all of them as suspect."
+      ? ` Same address string also listed on ${top.cluster.platforms.slice(1).join(", ")} — relationship unverified.`
       : "";
     const reason = runnerUp
-      ? `${fmtUsd(top.best.liqUsd)} pool depth x ${top.best.uniqueTraders24h} unique traders, ${marginX.toFixed(1)}x the runner-up.${clusterNote} Heuristic, not proof.${farmNote}`
-      : `Only candidate with both liquidity and trader data.${clusterNote} Heuristic, not proof.${farmNote}`;
+      ? `${fmtUsd(top.best.liqUsd)} pool depth x ${top.best.uniqueTraders24h} unique traders, ${marginX.toFixed(1)}x the runner-up.${clusterNote} Heuristic, not proof.`
+      : `Only candidate with both liquidity and trader data.${clusterNote} Heuristic, not proof.`;
     pick = { candidate: top.best, marginX, label, reason, runnerUp: runnerUp?.best ?? null };
   }
 
   const chains = new Set(rows.map((c) => c.platform));
   const farmingFlagged = rows.filter((c) => c.flags.includes("possible-farming")).length;
+  let noneReason = null;
+  if (!family && !pick) {
+    noneReason =
+      rows.length === 0 ? "no-candidates"
+      : !isAddressQuery && exact.length === 0 ? "no-exact-symbol-match"
+      : pickDex.length === 0 ? "no-dex-candidates"
+      : pickPool.length === 0 ? "all-candidates-farming-flagged"
+      : "no-candidate-with-liquidity-and-trader-data";
+  }
   return {
     ok: true,
     query,
     endpoint: "/v1/dex/search",
     ...meta,
     resolution: rows.length === 0 || (!family && !pick) ? "none" : family ? "family" : "pick",
+    noneReason,
     family,
     stats: {
       totalRows: rows.length,
@@ -246,45 +277,130 @@ async function sha256Hex(text) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+const RULES_VERSION = "2026-10-01.2";
+const UPSTREAM_TIMEOUT_MS = 8000;
+const UPSTREAM_LIMIT = 100;
+const CACHE_TTL_MS = 5 * 60_000;
+const CACHE_MAX = 64;
+const upstreamCache = new Map(); // qLower → { t, payload }
+const inflight = new Map();      // qLower → Promise<payload> (burst dedup)
+
+async function fetchUpstream(raw, apiKey) {
+  const key = raw.toLowerCase();
+  const hit = upstreamCache.get(key);
+  if (hit && Date.now() - hit.t < CACHE_TTL_MS) return { ...hit, cached: true };
+  if (inflight.has(key)) return inflight.get(key);
+  const job = (async () => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), UPSTREAM_TIMEOUT_MS);
+    try {
+      const res = await fetch(`${CMC_BASE}/v1/dex/search?q=${encodeURIComponent(raw)}&limit=${UPSTREAM_LIMIT}`, {
+        headers: { "X-CMC_PRO_API_KEY": apiKey, Accept: "application/json" },
+        signal: ctrl.signal,
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(`cmc http ${res.status}`);
+      const body = JSON.parse(text);
+      const errCode = body?.status?.error_code;
+      if (errCode !== undefined && errCode !== null && String(errCode) !== "0")
+        throw new Error(`cmc error ${errCode}: ${body?.status?.error_message ?? "unknown"}`);
+      if (!Array.isArray(body?.data?.tks)) throw new Error("cmc payload missing data.tks");
+      const payload = {
+        rows: body.data.tks,
+        credits: body?.status?.credit_count ?? null,
+        capturedAt: new Date().toISOString(),
+        bodySha256: await sha256Hex(text),
+      };
+      if (upstreamCache.size >= CACHE_MAX) upstreamCache.delete(upstreamCache.keys().next().value);
+      upstreamCache.set(key, { t: Date.now(), ...payload });
+      return payload;
+    } finally {
+      clearTimeout(timer);
+      inflight.delete(key);
+    }
+  })();
+  inflight.set(key, job);
+  return job;
+}
+
+// Load a committed replay fixture. New-format fixtures keep the RAW response
+// body (bodyRaw) so the stored sha256 is actually re-verifiable — old-format
+// fixtures only kept the parsed body and report verified:false.
+async function loadFixture(env, url, raw) {
+  const fixtureUrl = new URL(`/fixtures/${encodeURIComponent(raw.toUpperCase())}.json`, url.origin);
+  const asset = await env.ASSETS.fetch(new Request(fixtureUrl));
+  const ct = asset.headers.get("content-type") ?? "";
+  if (!asset.ok || !ct.includes("json")) return null;
+  let fixture = null;
+  try { fixture = await asset.json(); } catch { return null; }
+  if (typeof fixture?.bodyRaw === "string") {
+    const sha = await sha256Hex(fixture.bodyRaw);
+    let rows = [];
+    try { rows = JSON.parse(fixture.bodyRaw)?.data?.tks ?? []; } catch { return null; }
+    return {
+      rows,
+      capturedAt: fixture.capturedAt ?? null,
+      credits: fixture.credits ?? null,
+      bodySha256: fixture.bodySha256 ?? sha,
+      verified: fixture.bodySha256 ? sha === fixture.bodySha256 : false,
+    };
+  }
+  if (Array.isArray(fixture?.body?.data?.tks)) {
+    return {
+      rows: fixture.body.data.tks,
+      capturedAt: fixture.capturedAt ?? null,
+      credits: fixture.credits ?? null,
+      bodySha256: fixture.bodySha256 ?? null,
+      verified: false,
+    };
+  }
+  return null;
+}
+
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
   const raw = (url.searchParams.get("q") ?? "").trim().replace(/^\$/, "");
   if (!raw || !QUERY_RE.test(raw)) {
-    return json({ ok: false, error: "q must be a ticker or address (1-32 chars, letters/digits/$._:-)", query: raw }, 400);
+    return json({ ok: false, error: "q must be a ticker or address (1-44 chars, letters/digits/$._:-)", query: raw }, 400);
   }
 
+  const meta = {
+    rulesVersion: RULES_VERSION,
+    coverage: { requestedLimit: UPSTREAM_LIMIT, note: "query-bounded result set — completeness unknown" },
+  };
   const apiKey = context.env.CMC_API_KEY;
   if (apiKey) {
     try {
-      const res = await fetch(`${CMC_BASE}/v1/dex/search?q=${encodeURIComponent(raw)}`, {
-        headers: { "X-CMC_PRO_API_KEY": apiKey, Accept: "application/json" },
-      });
-      const text = await res.text();
-      if (!res.ok) return json({ ok: false, error: `cmc http ${res.status}`, query: raw }, 502);
-      const body = JSON.parse(text);
-      const sha = await sha256Hex(text);
-      return json(buildResult(raw, body?.data?.tks ?? [], {
-        mode: "live",
-        capturedAt: new Date().toISOString(),
-        credits: body?.status?.credit_count ?? null,
-        bodySha256: sha,
+      const up = await fetchUpstream(raw, apiKey);
+      return json(buildResult(raw, up.rows, {
+        ...meta,
+        mode: up.cached ? "live (cached)" : "live",
+        capturedAt: up.capturedAt,
+        credits: up.credits,
+        bodySha256: up.bodySha256,
       }));
     } catch (e) {
+      // Explicit, labeled fallback: a committed replay fixture marked stale —
+      // never dressed up as a live answer.
+      const fx = await loadFixture(context.env, url, raw);
+      if (fx) {
+        return json(buildResult(raw, fx.rows, {
+          ...meta,
+          mode: "stale-replay",
+          staleReason: `upstream failed: ${e instanceof Error ? e.message : e}`,
+          capturedAt: fx.capturedAt,
+          credits: fx.credits,
+          bodySha256: fx.bodySha256,
+          receiptVerified: fx.verified,
+        }));
+      }
       return json({ ok: false, error: `upstream failure: ${e instanceof Error ? e.message : e}`, query: raw }, 502);
     }
   }
 
   // Replay path: committed fixtures only, honest 404 when uncovered.
-  // Dev/SPA fallback can return index.html with a 200 for missing assets —
-  // require JSON content-type AND the fixture shape before trusting it.
-  const fixtureUrl = new URL(`/fixtures/${encodeURIComponent(raw.toUpperCase())}.json`, url.origin);
-  const asset = await context.env.ASSETS.fetch(new Request(fixtureUrl));
-  const ct = asset.headers.get("content-type") ?? "";
-  let fixture = null;
-  if (asset.ok && ct.includes("json")) {
-    try { fixture = await asset.json(); } catch { fixture = null; }
-  }
-  if (!fixture || !Array.isArray(fixture?.body?.data?.tks)) {
+  const fx = await loadFixture(context.env, url, raw);
+  if (!fx) {
     return json({
       ok: false,
       error: "no live key configured and no committed fixture for this query",
@@ -292,10 +408,12 @@ export async function onRequestGet(context) {
       fixturesNote: "replay covers only the committed example tickers",
     }, 404);
   }
-  return json(buildResult(raw, fixture.body.data.tks, {
+  return json(buildResult(raw, fx.rows, {
+    ...meta,
     mode: "replay",
-    capturedAt: fixture.capturedAt ?? null,
-    credits: fixture.credits ?? null,
-    bodySha256: fixture.bodySha256 ?? null,
+    capturedAt: fx.capturedAt,
+    credits: fx.credits,
+    bodySha256: fx.bodySha256,
+    receiptVerified: fx.verified,
   }));
 }

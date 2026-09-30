@@ -1,10 +1,10 @@
 # AmbiguityDesk
 
-**"PEPE yang mana yang asli?"** — a standalone ticker-collision resolver for DEX traders.
+**"PEPE yang mana yang layak dicek?"** — a standalone ticker-collision resolver for DEX traders.
 
-Type a ticker, get every token wearing it across every chain CoinMarketCap DEX
-tracks, plus the address most worth trusting — labeled honestly as a heuristic,
-never as proof.
+Type a ticker, get every observed candidate wearing it across the chains
+CoinMarketCap DEX tracks, plus the deployment best supported by the evidence —
+labeled honestly as a heuristic, never as proof.
 
 Live: **https://ambiguitydesk.pages.dev** · Repo: `github.com/alfindigital/ambiguitydesk`
 
@@ -20,29 +20,33 @@ single-chain registries, or paid per-candidate lookups.
 
 ## What it does (v2)
 
-1. Query `/v1/dex/search?q=<ticker>` — one call, one credit, up to 50 rows.
+1. Query `/v1/dex/search?q=<ticker|address>&limit=100` — one call, one credit,
+   up to 100 rows (bounded coverage, shown in the UI).
 2. Split results into **exact-symbol matches** vs **related**, and cut
    **off-chain venue rows** (Robinhood & friends — `/v1/dex/search` mixes them
    with DEX pools; trader counts aren't comparable across venue types).
-3. Cluster same-contract rows across chains (incl. bridge refs like
-   `eth-0x6982….omft.near`), so a mirrored deployment can't fake a race.
+3. Cluster same-address rows across chains (incl. bridge refs like
+   `eth-0x6982….omft.near`), so mirrored deployments are grouped — shown as
+   "same address, relationship unverified", not assumed bridged.
 4. Score each candidate: **`liquidity × unique-traders-24h`**, then apply
    honesty penalties — `young-pool` (<30 days since `fpct`/`fpt`) halves the
-   effective score, `possible-farming` (traders-per-$100k-liquidity anomaly)
-   removes pick eligibility entirely.
-5. Detect **canonical multi-chain assets**: when one `cid` shows deep pools on
-   ≥3 chains, the answer isn't "the real one" — it's **family mode**, best pool
-   per chain. Asking "which USDT is real" is the wrong question.
-6. Stamp a **BEST-SUPPORTED CANDIDATE** (`clear-lead` ≥3×, `close-call`,
-   `only-candidate`) — heuristic, not proof — and show the full exhibit table
-   with flags, explorer links, copyable addresses.
+   effective score, `possible-farming` (traders-per-$100k-liquidity anomaly on
+   pools under $1M) removes pick eligibility. Deep pools are exempt — a crowded
+   $6M pool is evidence, not a farm (Solana BONK).
+5. Detect **canonical multi-chain assets**: when one positive `cid` shows deep
+   pools on ≥3 chains, there is no single winner — it's **family mode**, best
+   pool per chain. Asking "which USDT is real" is the wrong question.
+6. Stamp a **BEST PICK** (`clear-lead` ≥3×, `close-call`, `only-candidate`) —
+   heuristic, not proof — or **abstain** (`resolution: "none"`) when no exact
+   symbol matches, every candidate is farming-flagged, or no candidate has
+   both liquidity and trader data. No pick is better than a wrong pick.
 
 ### Why the pick is a 3-signal read, not one number
 
 Real data proved single metrics are gameable:
 
 - The real PEPE (Ethereum): `$34.16M liq × 554 ut24h`. A Solana clone:
-  `$0.21M liq × 3,086 ut24h` — **more traders than the real one**. Sort by
+  `$0.21M liq × 3,086 ut24h` — **more traders than the canonical one**. Sort by
   traders → recommend the clone. The product of the two wins 21×.
 - PI: a "Pump Inu" clone carried **8,255 unique traders on an $83.7K pool** —
   a textbook farming signature. It now gets `possible-farming` and is
@@ -59,15 +63,15 @@ Real data proved single metrics are gameable:
 
 ## CMC API usage (named endpoints)
 
-- `GET /v1/dex/search?q=<ticker|address>` — the whole collision map in **one
-  call / one credit**. Fields used per row: `plt`, `addr`, `n`, `s`, `liq`,
-  `ut24h`, `mc`, `pc24h`, `v24h`, `l`, `cid`, `fpt`, `fpct`.
+- `GET /v1/dex/search?q=<ticker|address>&limit=100` — the whole collision map
+  in **one call / one credit**. Fields used per row: `plt`, `addr`, `n`, `s`,
+  `liq`, `ut24h`, `mc`, `pc24h`, `v24h`, `l`, `cid`, `fpt`, `fpct`.
 
 **Evidence of a real call:** `functions/api/resolve.js` calls
 `https://pro-api.coinmarketcap.com/v1/dex/search` server-side with
 `X-CMC_PRO_API_KEY`, returns `{ bodySha256, credits, capturedAt }` per query,
-and every fixture in `fixtures/` is a sha256-hashed raw response body
-(`fixtures/PEPE.json` → `body.data.tks`, 50 rows, `credit_count: 1`).
+and every fixture in `fixtures/` stores the **raw upstream body** (`bodyRaw`)
+plus its sha256 — replay re-hashes the bytes and reports `receiptVerified`.
 
 ### What the API made possible — and where it got in the way
 
@@ -77,8 +81,8 @@ Made possible: multi-chain breadth in a single cheap call, and `ut24h`
 Got in the way (feedback for the API team):
 - `/v1/dex/search` mixes **off-chain venues** (Robinhood…) with DEX pools —
   `ut24h` across venue types isn't comparable; a `venueType` field would fix it.
-- Results are **capped at 50 rows** — for mega-collisions (USDT: 48 chains)
-  the tail is invisible.
+- Results are **bounded per query** (we request `limit=100`) — for
+  mega-collisions the tail is invisible; the UI states the bound.
 - `mc` is supply-inflatable and arrives dirty (`1e23`); a sanity flag helps.
 
 ## Architecture
@@ -89,7 +93,7 @@ ambiguitydesk/
 ├── css/style.css               # Evidence Desk visual system (Verdex direction A)
 ├── js/app.js                   # fetch → states → exhibit rows (no framework)
 ├── functions/api/resolve.js    # Pages Function: CMC proxy + scoring + clustering
-├── fixtures/*.json             # 18 committed replay captures (sha256'd raw bodies)
+├── fixtures/*.json             # 48 committed replay captures (raw bodies, sha256-verified)
 ├── specs/                      # PRODUCT_SPEC + TECH_SPEC (v2 upgrade)
 ├── audit/probe-*.json          # live-probe evidence from the deep audit
 ├── fonts/ icons/
@@ -98,7 +102,7 @@ ambiguitydesk/
 │   ├── make-icons.js           # zero-dep PNG icon generator
 │   ├── probe-live.mjs          # run queries through the resolver live
 │   ├── build-dist.js           # whitelist dist builder — see below
-│   └── test-resolve.mjs        # offline resolver unit tests (42 assertions)
+│   └── test-resolve.mjs        # offline resolver unit tests (49 assertions)
 └── dist/                       # built artifact — the ONLY thing that deploys
 ```
 
@@ -140,8 +144,11 @@ number in the UI traces to a sha256-hashed response body you can replay.
 - `$`-prefixed symbols are normalized to the bare ticker (`$WIF` ≈ `WIF`).
 - Rows without `liq` or `ut24h` are shown but can't be scored — they render
   `unknown` / `no score`, not zero.
-- Replay mode covers only the committed fixture tickers.
-- The heuristic can't prove authenticity — it shows the best-supported
-  candidate and flags the ones that look bought.
+- Replay mode covers only the committed fixture tickers; on upstream failure
+  with a key configured, a fixture is served labeled `stale-replay`.
+- The heuristic can't prove authenticity — it ranks evidence. Same-address
+  clustering marks string matches; it does not prove issuer/bridge
+  relationship. CEX venue detection uses a name registry — unmapped venues are
+  shown and flagged, not guessed.
 
 Not financial advice. An evidence desk, not a verdict.

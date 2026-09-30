@@ -38,9 +38,12 @@ console.log("— pepe (mass collision) —");
   const { status, body } = await call("pepe");
   check("200", status === 200);
   check("ok+replay", body.ok === true && body.mode === "replay");
-  check("50 candidates", body.candidates.length === 50, `got ${body.candidates.length}`);
   const fx = JSON.parse(readFileSync(path.join(FIXTURES, "PEPE.json")));
-  const expectedExact = fx.body.data.tks.filter((r) => String(r.s).toLowerCase().replace(/^\$/, "") === "pepe").length;
+  const fxRows = fx.bodyRaw ? JSON.parse(fx.bodyRaw).data.tks : fx.body.data.tks;
+  check(`all addressable fixture rows returned (${fxRows.filter((r) => r.addr).length})`,
+    body.candidates.length === fxRows.filter((r) => r.addr).length, `got ${body.candidates.length}`);
+  check("receipt verified against raw body", body.receiptVerified === true, `got ${body.receiptVerified}`);
+  const expectedExact = fxRows.filter((r) => String(r.s).toLowerCase().replace(/^\$/, "") === "pepe").length;
   check(`exact bucket = ${expectedExact} minus appvenue`, body.stats.exactCount === body.candidates.filter((c) => c.bucket === "exact").length, `got ${body.stats.exactCount}`);
   check("pick = ethereum pepe",
     body.pick?.candidate?.platform === "Ethereum" &&

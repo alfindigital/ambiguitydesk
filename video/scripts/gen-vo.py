@@ -8,11 +8,11 @@ BASE = os.path.join(os.path.dirname(__file__), "..", "public")
 VOICE = "en-US-GuyNeural"
 
 LINES = {
-    "vo-s0": "Fifty tokens answer to the same ticker. Which PEPE is the real one?",
-    "vo-s1": "AmbiguityDesk makes one CoinMarketCap call — and every impostor shows up. Fifty candidates, eleven chains. The real Pepe wins on liquidity and traders, not the name.",
-    "vo-s2": "Type WIF, and a naive match crowns a pump clone. The real dogwifhat lists as dollar-WIF — the desk normalizes the symbol, and the canonical token wins by seventeen hundred times.",
-    "vo-s3": "And when the question itself is wrong — like USDT — the desk says so. One canonical asset, deep pools on twenty-six chains. Pick your chain.",
-    "vo-s4": "Evidence, not guesses. AmbiguityDesk — one call, every candidate.",
+    "vo-s0": "Fifty tokens answer to the same ticker. Which PEPE is worth inspecting?",
+    "vo-s1": "AmbiguityDesk makes one CoinMarketCap call — and every impostor shows up. Fifty candidates, eleven chains. The strongest candidate wins on liquidity and traders, not the name.",
+    "vo-s2": "Type WIF, and a naive match crowns a pump clone. The canonical dogwifhat lists as dollar-WIF — the desk normalizes the symbol, and the best-evidenced deployment wins by seventeen hundred times.",
+    "vo-s3": "And when the question itself is wrong — like USDT — the desk says so. One asset, deep pools on twenty-six chains. Pick your chain.",
+    "vo-s4": "Evidence, not guesses. AmbiguityDesk — one call, every observed candidate.",
 }
 
 async def main():

@@ -1,48 +1,9 @@
 {
   "query": "PEPE2.0",
-  "endpoint": "/v1/dex/search",
-  "capturedAt": "2026-09-30T16:32:36.024Z",
+  "endpoint": "/v1/dex/search?limit=100",
+  "capturedAt": "2026-09-30T23:19:39.455Z",
   "httpStatus": 200,
   "credits": 1,
-  "bodySha256": "89d1fec71e7241f37ab79419cb36d4e72ed93d3e7fd789dfa3ee7bd4dc3cd872",
-  "body": {
-    "data": {
-      "total": 1,
-      "tks": [
-        {
-          "pltId": 1,
-          "plt": "Ethereum",
-          "plti": 1027,
-          "n": "Pepe 2.0",
-          "s": "PEPE2.0",
-          "addr": "0x0305f515fa978cf87226cf8a9776d25bcfb2cc0b",
-          "pt": "1704227471000",
-          "w": "https://pepe20.vip",
-          "x": "https://twitter.com/pepe2coineth",
-          "l": "https://s2.coinmarketcap.com/static/img/coins/64x64/27276.png",
-          "pu": "0.000000001029887026837120403717115949",
-          "pc24h": -0.0164,
-          "dec": 18,
-          "tsup": "469000000000000",
-          "fpt": "1740324443000",
-          "fpct": "1704227471000",
-          "v24h": 3969.6493488125675,
-          "mc": 483017.0155866095,
-          "liq": 205003.87746672856,
-          "ts": "1790778959000",
-          "lf": 1,
-          "cid": 27276,
-          "ut24h": "7",
-          "ecs": 0
-        }
-      ]
-    },
-    "status": {
-      "timestamp": "2026-09-30T16:32:36.087Z",
-      "error_code": "0",
-      "error_message": "",
-      "elapsed": 192,
-      "credit_count": 1
-    }
-  }
+  "bodySha256": "7e98435ea7dbdbbcdc915f414d60529a8bc7e443699ca53f45cdb7391cf5aabb",
+  "bodyRaw": "{\"data\":{\"total\":1,\"tks\":[{\"pltId\":1,\"plt\":\"Ethereum\",\"plti\":1027,\"n\":\"Pepe 2.0\",\"s\":\"PEPE2.0\",\"addr\":\"0x0305f515fa978cf87226cf8a9776d25bcfb2cc0b\",\"pt\":\"1704227471000\",\"w\":\"https://pepe20.vip\",\"x\":\"https://twitter.com/pepe2coineth\",\"l\":\"https://s2.coinmarketcap.com/static/img/coins/64x64/27276.png\",\"pu\":\"0.000000000951712730533348523746768692\",\"pc24h\":-0.0891,\"dec\":18,\"tsup\":\"469000000000000\",\"fpt\":\"1740324443000\",\"fpct\":\"1704227471000\",\"v24h\":11094.926764530233713915,\"mc\":446353.270620140457637235,\"liq\":197132.073919074358386139,\"ts\":\"1790807987000\",\"lf\":1,\"cid\":27276,\"ut24h\":\"11\",\"ecs\":0}]},\"status\":{\"timestamp\":\"2026-09-30T23:19:39.444Z\",\"error_code\":\"0\",\"error_message\":\"\",\"elapsed\":188,\"credit_count\":1}}"
 }

@@ -146,7 +146,7 @@
       flagWrap.append(el("span", `flag ${cls}`, label));
     }
     if (c.cluster && (clusterSizes.get(c.cluster) ?? 0) > 1) {
-      flagWrap.append(el("span", "flag same", `same contract x${clusterSizes.get(c.cluster)}`));
+      flagWrap.append(el("span", "flag same", `same address x${clusterSizes.get(c.cluster)} — unverified`));
     }
     if (flagWrap.childElementCount) nameWrap.append(flagWrap);
     id.append(nameWrap);
@@ -246,13 +246,21 @@
   }
 
   function receiptRows(r) {
-    return [
-      ["endpoint", `${r.endpoint}?q=${r.query}`],
+    const rows = [
+      ["endpoint", `${r.endpoint}?q=${r.query}&limit=${r.coverage?.requestedLimit ?? 50}`],
       ["captured", r.capturedAt ?? "unknown"],
       ["sha256", r.bodySha256 ? `${r.bodySha256.slice(0, 16)}…` : "unknown"],
       ["credits", r.credits ?? "unknown"],
       ["mode", r.mode],
+      ["receipt", r.mode === "live" || r.mode === "live (cached)"
+        ? "sha256 over raw upstream body"
+        : r.receiptVerified === true
+          ? "sha256 verified against raw stored body"
+          : "hash stored; raw body not retained (legacy fixture)"],
+      ["rules", r.rulesVersion ?? "unknown"],
     ];
+    if (r.staleReason) rows.push(["note", r.staleReason]);
+    return rows;
   }
 
   function renderAudit(r) {
@@ -325,8 +333,10 @@
       el("b", "", `${r.stats.relatedCount}`),
       document.createTextNode(` related · `),
       el("b", "", `${r.stats.chainCount}`),
-      document.createTextNode(` chains · ${r.stats.clusterCount} distinct contracts`),
+      document.createTextNode(` chains · ${r.stats.clusterCount} distinct addresses`),
     );
+    stats.append(document.createTextNode(
+      ` · observed ${r.stats.totalRows} rows in a ≤${r.coverage?.requestedLimit ?? 50}-row window`));
     if (r.stats.farmingFlagged) {
       stats.append(document.createTextNode(" · "), el("b", "stat-danger", `${r.stats.farmingFlagged}`),
         document.createTextNode(" farming-flagged"));
@@ -349,10 +359,18 @@
       resultBox.append(renderFamily(r.family, r.query));
     } else if (r.pick) resultBox.append(renderPick(r.pick));
     else {
+      const NONE_MSG = {
+        "no-exact-symbol-match": `No exact "${r.query}" deployment in this result set — nearest matches below. No pick is better than a wrong pick.`,
+        "all-candidates-farming-flagged": "Every candidate in this set carries a possible-farming flag — the desk abstains rather than crown a suspect.",
+        "no-dex-candidates": "No on-chain DEX candidates in this result set.",
+        "no-candidate-with-liquidity-and-trader-data": "No candidate has both liquidity and trader data. No pick is better than a fake pick.",
+        "no-candidates": "No candidates returned for this query.",
+      };
       const box = el("div", "notfound-state");
-      box.append(el("p", "", exact.length
-        ? "No candidate has both liquidity and trader data. No pick is better than a fake pick."
-        : `No exact "${r.query}" deployment in this result set — nearest matches below. No pick is better than a wrong pick.`));
+      box.append(el("p", "", NONE_MSG[r.noneReason]
+        ?? (exact.length
+          ? "No candidate has both liquidity and trader data. No pick is better than a fake pick."
+          : `No exact "${r.query}" deployment in this result set — nearest matches below. No pick is better than a wrong pick.`)));
       resultBox.append(box);
     }
 

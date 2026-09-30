@@ -1,73 +1,9 @@
 {
   "query": "SLERF",
-  "endpoint": "/v1/dex/search",
-  "capturedAt": "2026-09-30T16:32:29.204Z",
+  "endpoint": "/v1/dex/search?limit=100",
+  "capturedAt": "2026-09-30T23:19:43.234Z",
   "httpStatus": 200,
   "credits": 1,
-  "bodySha256": "66fc5a107fb6b17976d1dbe4e00717691b9d7555e1a382ed0a2e7d7b82ba5900",
-  "body": {
-    "data": {
-      "total": 2,
-      "tks": [
-        {
-          "pltId": 16,
-          "plt": "Solana",
-          "plti": 5426,
-          "n": "SLERF",
-          "s": "SLERF",
-          "addr": "7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7LoiVkM3",
-          "pt": "1710701551000",
-          "w": "https://www.slerf.wtf/raids",
-          "x": "https://twitter.com/Slerfsol",
-          "l": "https://s2.coinmarketcap.com/static/img/coins/64x64/29920.png",
-          "pu": "0.02379708166421955727631246106827179",
-          "pc24h": 0.006,
-          "dec": 9,
-          "tsup": "499985152.306992242",
-          "fpt": "1740784534000",
-          "fpct": "1710744804000",
-          "v24h": 1499.122457747056,
-          "mc": 11898187.500346748,
-          "liq": 20775768.498408034,
-          "ts": "1790774819000",
-          "lf": 1,
-          "cid": 29920,
-          "ut24h": "34",
-          "ecs": 0
-        },
-        {
-          "pltId": 16,
-          "plt": "Solana",
-          "plti": 5426,
-          "n": "SLERF",
-          "s": "SLERF",
-          "addr": "9999FVbjHioTcoJpoBiSjpxHW6xEn3witVuXKqBh2RFQ",
-          "pt": "1753971143000",
-          "w": "https://www.slerf.wtf/",
-          "x": "https://twitter.com/Slerfsol",
-          "l": "https://s2.coinmarketcap.com/static/img/coins/64x64/37758.png",
-          "pu": "0.002243131525839019200000000000000000",
-          "pc24h": 0.0064,
-          "dec": 9,
-          "tsup": "999989595.069738284",
-          "fpt": "1761069600000",
-          "fpct": "1761006483000",
-          "v24h": 3915.620253354204,
-          "mc": 2243108.186211925,
-          "liq": 322793.96766984183,
-          "ts": "1790775123000",
-          "lf": 1,
-          "cid": 37758,
-          "ut24h": "22"
-        }
-      ]
-    },
-    "status": {
-      "timestamp": "2026-09-30T16:32:29.273Z",
-      "error_code": "0",
-      "error_message": "",
-      "elapsed": 179,
-      "credit_count": 1
-    }
-  }
+  "bodySha256": "debcf4a3f6716c1ae23ce3dd9b0e266043dfe41e736d2cd6426af16788117bfd",
+  "bodyRaw": "{\"data\":{\"total\":2,\"tks\":[{\"pltId\":16,\"plt\":\"Solana\",\"plti\":5426,\"n\":\"SLERF\",\"s\":\"SLERF\",\"addr\":\"7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7LoiVkM3\",\"pt\":\"1710701551000\",\"w\":\"https://www.slerf.wtf/raids\",\"x\":\"https://twitter.com/Slerfsol\",\"l\":\"https://s2.coinmarketcap.com/static/img/coins/64x64/29920.png\",\"pu\":\"0.023246290290135637\",\"pc24h\":0.0014,\"dec\":9,\"tsup\":\"499985152.306992242\",\"fpt\":\"1740784534000\",\"fpct\":\"1710744804000\",\"v24h\":412.879265857676683503,\"mc\":11622799.991286021340413394,\"liq\":20311873.016148772760280612,\"ts\":\"1790721801000\",\"lf\":1,\"cid\":29920,\"ut24h\":\"38\",\"ecs\":0},{\"pltId\":16,\"plt\":\"Solana\",\"plti\":5426,\"n\":\"SLERF\",\"s\":\"SLERF\",\"addr\":\"9999FVbjHioTcoJpoBiSjpxHW6xEn3witVuXKqBh2RFQ\",\"pt\":\"1753971143000\",\"w\":\"https://www.slerf.wtf/\",\"x\":\"https://twitter.com/Slerfsol\",\"l\":\"https://s2.coinmarketcap.com/static/img/coins/64x64/37758.png\",\"pu\":\"0.002196699686001468000000000000000000\",\"pc24h\":6.0E-4,\"dec\":9,\"tsup\":\"999989595.069738284\",\"fpt\":\"1761069600000\",\"fpct\":\"1761006483000\",\"v24h\":5676.684927430937600403,\"mc\":2196676.829494429221290542,\"liq\":317353.97915554850190464,\"ts\":\"1790721642000\",\"lf\":1,\"cid\":37758,\"ut24h\":\"27\"}]},\"status\":{\"timestamp\":\"2026-09-30T23:19:43.220Z\",\"error_code\":\"0\",\"error_message\":\"\",\"elapsed\":165,\"credit_count\":1}}"
 }
