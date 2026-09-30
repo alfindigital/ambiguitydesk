@@ -54,10 +54,10 @@ function png(width, height, px) {
   ]);
 }
 
-const INK = [0x0b, 0x0c, 0x0a, 0xff];
-const RAISED = [0x1a, 0x1e, 0x15, 0xff];
-const ACCENT = [0x3d, 0xd6, 0x8c, 0xff];
-const PAPER = [0xea, 0xe8, 0xda, 0xff];
+const INK = [0x0e, 0x0b, 0x07, 0xff];
+const RAISED = [0x2d, 0x25, 0x14, 0xff];
+const RAISED_DIM = [0x24, 0x1e, 0x11, 0xff];
+const ACCENT = [0xf7, 0xad, 0x33, 0xff];
 
 function roundedRect(px, w, h, x0, y0, rw, rh, color, radius) {
   for (let y = y0; y < y0 + rh; y++) {
@@ -77,20 +77,23 @@ function roundedRect(px, w, h, x0, y0, rw, rh, color, radius) {
 function icon(size, file) {
   const px = Buffer.alloc(size * size * 4);
   for (let i = 0; i < size * size; i++) px.set(INK, i * 4);
-  const m = Math.round(size * 0.14);          // margin
+  const m = Math.round(size * 0.14);          // side margin
   const rowH = Math.round(size * 0.15);       // row height
   const gap = Math.round(size * 0.07);
   const r = Math.round(size * 0.04);
-  // three candidate rows; the middle one is the pick, accent and longer
+  // group centered vertically
+  const totalH = 3 * rowH + 2 * gap;
+  const top = Math.round((size - totalH) / 2);
+  // three candidate rows; the bottom one is the pick, accent and longest
   const rows = [
-    { y: m + 0 * (rowH + gap), w: size - 2 * m, color: RAISED },
-    { y: m + 1 * (rowH + gap), w: Math.round(size * 0.62), color: RAISED },
-    { y: m + 2 * (rowH + gap), w: size - 2 * m, color: ACCENT },
+    { y: top + 0 * (rowH + gap), w: size - 2 * m, color: RAISED },
+    { y: top + 1 * (rowH + gap), w: Math.round(size * 0.62), color: RAISED_DIM },
+    { y: top + 2 * (rowH + gap), w: size - 2 * m, color: ACCENT },
   ];
   for (const row of rows) roundedRect(px, size, size, m, row.y, row.w, rowH, row.color, r);
-  // desk dot: paper chip on the pick row
+  // punched dot on the pick row
   const d = Math.round(size * 0.09);
-  roundedRect(px, size, size, size - m - d, m + 2 * (rowH + gap) + Math.round((rowH - d) / 2), d, d, PAPER, d / 2);
+  roundedRect(px, size, size, size - m - d, top + 2 * (rowH + gap) + Math.round((rowH - d) / 2), d, d, INK, d / 2);
   writeFileSync(path.join(OUT, file), png(size, size, px));
   console.log("icons/" + file, size + "x" + size);
 }

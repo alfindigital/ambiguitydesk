@@ -1,17 +1,17 @@
 import React from "react";
-import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, interpolate, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 
 // Evidence Desk palette — inherited from the app, no fake chrome.
 const C = {
-  bg: "#141a16",
-  ink: "#ece7d8",
-  dim: "#9aa394",
-  faint: "#6b7265",
-  line: "#2a322b",
-  accent: "#7ec89a",
-  paper: "#e9dfc8",
-  warn: "#f0b23c",
-  danger: "#f2555a",
+  bg: "#0e0b07",
+  ink: "#f6efdc",
+  dim: "#cfc19c",
+  faint: "#968768",
+  line: "#2d2514",
+  accent: "#f7ad33",
+  paper: "#f6efdc",
+  warn: "#f7ad33",
+  danger: "#ef6159",
 };
 const FONT_DATA = "'IBM Plex Mono', 'Consolas', monospace";
 const FONT_DISP = "Georgia, 'Times New Roman', serif";
@@ -140,12 +140,26 @@ const QueryBar: React.FC<{ q: string; frame: number; delay: number }> = ({ q, fr
   );
 };
 
+// VO timing (30fps): one line per scene, edge-tts en-US-GuyNeural
+const VO = [
+  { file: "vo-s0.mp3", from: 14 },     // title
+  { file: "vo-s1.mp3", from: 118 },    // PEPE collision
+  { file: "vo-s2.mp3", from: 820 },    // WIF $-trap
+  { file: "vo-s3.mp3", from: 1425 },   // USDT family
+  { file: "vo-s4.mp3", from: 1940 },   // closing
+];
+
 export const AmbiguityDemo: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   return (
     <AbsoluteFill style={{ background: C.bg, color: C.ink, fontFamily: FONT_DATA }}>
+      {VO.map((v) => (
+        <Sequence key={v.file} from={v.from}>
+          <Audio src={staticFile(v.file)} />
+        </Sequence>
+      ))}
       {/* S0 — Title (0–100) */}
       <Scene from={0} to={100}>
         <div style={{ marginTop: 160 }}>
@@ -178,7 +192,7 @@ export const AmbiguityDemo: React.FC = () => {
           ))}
         </div>
         <div style={{ marginTop: 40, display: "flex", alignItems: "center", gap: 32 }}>
-          <Stamp text="best-supported candidate" frame={frame} fps={fps} delay={500} />
+          <Stamp text="best pick" frame={frame} fps={fps} delay={500} />
           <div style={{ fontSize: 26, color: C.dim, opacity: fade(frame, 560, 600) }}>
             Ethereum PEPE · <span style={{ color: C.accent }}>21.5×</span> the runner-up · heuristic, not proof
           </div>
@@ -217,7 +231,7 @@ export const AmbiguityDemo: React.FC = () => {
         <Tag text="case 03 — when the question is wrong" />
         <QueryBar q="usdt" frame={frame} delay={1430} />
         <div style={{ opacity: fade(frame, 1520, 1560) }}>
-          <Stamp text="canonical multi-chain asset" frame={frame} fps={fps} delay={1520} />
+          <Stamp text="multi-chain asset" frame={frame} fps={fps} delay={1520} />
           <div style={{ fontSize: 24, color: C.dim, margin: "26px 0" }}>
             One canonical listing · deep pools on 26 chains. There is no single "real" USDT — pick your chain.
           </div>
